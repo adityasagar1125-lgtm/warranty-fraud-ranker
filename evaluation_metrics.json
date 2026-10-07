@@ -1,0 +1,164 @@
+{
+  "time_split_validation": {
+    "total_claims_in_slice": 2136,
+    "total_fraud_in_slice": 45,
+    "total_fraud_rupees": 104109.0,
+    "months_evaluated": 3,
+    "total_claims_checked": 120,
+    "fraud_caught_tp": 3,
+    "genuine_held_fp": 117,
+    "fraud_missed_fn": 42,
+    "precision_at_40_month": 0.025,
+    "recall_at_40_month": 0.06666666666666667,
+    "fraud_amount_prevented_inr": 40286.0,
+    "goodwill_paid_inr": 44460.0,
+    "net_rupees_saved_inr": -4174.0,
+    "rupees_saved_per_claim_checked": -34.78333333333333,
+    "roc_auc": 0.4997608799617408,
+    "pr_auc": 0.021067415730337078,
+    "brier_score": 0.021334215752110988,
+    "overall_accuracy": 0.925561797752809
+  },
+  "post_may_validation": {
+    "total_claims_in_slice": 1431,
+    "total_fraud_in_slice": 36,
+    "total_fraud_rupees": 67123.0,
+    "months_evaluated": 2,
+    "total_claims_checked": 80,
+    "fraud_caught_tp": 1,
+    "genuine_held_fp": 79,
+    "fraud_missed_fn": 35,
+    "precision_at_40_month": 0.0125,
+    "recall_at_40_month": 0.027777777777777776,
+    "fraud_amount_prevented_inr": 17866.0,
+    "goodwill_paid_inr": 30020.0,
+    "net_rupees_saved_inr": -12154.0,
+    "rupees_saved_per_claim_checked": -151.925,
+    "roc_auc": 0.4996415770609319,
+    "pr_auc": 0.025157232704402517,
+    "brier_score": 0.025567561038790407,
+    "overall_accuracy": 0.9203354297693921
+  },
+  "approve_all_baseline": {
+    "total_claims_in_slice": 2136,
+    "total_fraud_in_slice": 45,
+    "total_fraud_rupees": 104109.0,
+    "months_evaluated": 3,
+    "total_claims_checked": 120,
+    "fraud_caught_tp": 3,
+    "genuine_held_fp": 117,
+    "fraud_missed_fn": 42,
+    "precision_at_40_month": 0.025,
+    "recall_at_40_month": 0.06666666666666667,
+    "fraud_amount_prevented_inr": 4720.0,
+    "goodwill_paid_inr": 44460.0,
+    "net_rupees_saved_inr": -39740.0,
+    "rupees_saved_per_claim_checked": -331.1666666666667,
+    "roc_auc": 0.5,
+    "pr_auc": 0.021067415730337078,
+    "brier_score": 0.021067415730337078,
+    "overall_accuracy": 0.925561797752809
+  },
+  "rules_only_baseline": {
+    "total_claims_in_slice": 2136,
+    "total_fraud_in_slice": 45,
+    "total_fraud_rupees": 104109.0,
+    "months_evaluated": 3,
+    "total_claims_checked": 120,
+    "fraud_caught_tp": 21,
+    "genuine_held_fp": 99,
+    "fraud_missed_fn": 24,
+    "precision_at_40_month": 0.175,
+    "recall_at_40_month": 0.4666666666666667,
+    "fraud_amount_prevented_inr": 36354.0,
+    "goodwill_paid_inr": 37620.0,
+    "net_rupees_saved_inr": -1266.0,
+    "rupees_saved_per_claim_checked": -10.55,
+    "roc_auc": 0.8347361708911206,
+    "pr_auc": 0.12519134959804917,
+    "brier_score": 0.05971910112359552,
+    "overall_accuracy": 0.9424157303370787
+  },
+  "plain_classifier_baseline": {
+    "total_claims_in_slice": 2136,
+    "total_fraud_in_slice": 45,
+    "total_fraud_rupees": 104109.0,
+    "months_evaluated": 3,
+    "total_claims_checked": 120,
+    "fraud_caught_tp": 2,
+    "genuine_held_fp": 118,
+    "fraud_missed_fn": 43,
+    "precision_at_40_month": 0.016666666666666666,
+    "recall_at_40_month": 0.044444444444444446,
+    "fraud_amount_prevented_inr": 30963.0,
+    "goodwill_paid_inr": 44840.0,
+    "net_rupees_saved_inr": -13877.0,
+    "rupees_saved_per_claim_checked": -115.64166666666667,
+    "roc_auc": 0.3817152877411127,
+    "pr_auc": 0.03813462577210666,
+    "brier_score": 0.021548300036009053,
+    "overall_accuracy": 0.924625468164794
+  },
+  "top_features": [
+    [
+      "serial_fraud_hist",
+      0.7804045677185059
+    ],
+    [
+      "partner_shrunk_risk",
+      0.07242224365472794
+    ],
+    [
+      "partner_raw_fraud_rate",
+      0.0534859262406826
+    ],
+    [
+      "family_air_fryer",
+      0.03340277820825577
+    ],
+    [
+      "uninspected_new_partner",
+      0.0077283610589802265
+    ],
+    [
+      "log_claim_amount",
+      0.006430713459849358
+    ],
+    [
+      "uninspected_small_claim",
+      0.005391365848481655
+    ],
+    [
+      "claim_amount_inr",
+      0.004592858720570803
+    ],
+    [
+      "kw_desc_not_charging",
+      0.004354801028966904
+    ],
+    [
+      "partner_risk_x_small_claim",
+      0.0025374654214829206
+    ],
+    [
+      "post_may",
+      0.002439772477373481
+    ],
+    [
+      "new_partner_small_post_may",
+      0.0020168458577245474
+    ],
+    [
+      "purchase_to_warranty_ratio",
+      0.001800739555619657
+    ],
+    [
+      "desc_svd_2",
+      0.0017701536417007446
+    ],
+    [
+      "outlet_benford_divergence",
+      0.0016751914517953992
+    ]
+  ]
+}

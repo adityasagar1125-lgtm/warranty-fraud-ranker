@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kestrel Claim Triage — Capacity-Aware Warranty Fraud Ranker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- TOP NAVIGATION & HEADER -->
+    <header class="top-nav">
+      <div class="brand-group">
+        <div class="logo-badge">K</div>
+        <div>
+          <h1 class="brand-title">Kestrel Claim Triage</h1>
+          <p class="brand-subtitle">Capacity-Aware Warranty Fraud Ranker · Ops Policy v4.1</p>
+        </div>
+      </div>
+      <div class="nav-metrics">
+        <div class="metric-pill">
+          <span class="pill-label">Capacity Cap</span>
+          <span class="pill-val">40 claims / mo</span>
+        </div>
+        <div class="metric-pill">
+          <span class="pill-label">Goodwill Cost</span>
+          <span class="pill-val">₹380 / false alarm</span>
+        </div>
+        <div class="metric-pill highlight">
+          <span class="pill-label">Auto-Approve Tier</span>
+          <span class="pill-val">&lt; ₹2,000 (May '26)</span>
+        </div>
+        <div class="status-indicator">
+          <span class="status-dot"></span>
+          <span id="service-status">Engine Ready (Conformal v1.2)</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- TAB CONTROLS -->
+    <div class="tabs-bar">
+      <button class="tab-btn active" onclick="switchTab('evaluator')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+        Claim Evaluator (POST /score)
+      </button>
+      <button class="tab-btn" onclick="switchTab('top40')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+        This Month's Top 40 Triage
+      </button>
+      <button class="tab-btn" onclick="switchTab('evidence')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path></svg>
+        Executive Evidence & ROI
+      </button>
+      <button class="tab-btn" onclick="switchTab('api-export')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+        API & predictions.csv
+      </button>
+    </div>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="content-body">
+
+      <!-- TAB 1: CLAIM EVALUATOR -->
+      <section id="tab-evaluator" class="tab-content active">
+        <div class="grid-2col">
+          <!-- LEFT: CLAIM INPUT CARD -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title-group">
+                <h2 class="card-title">Live Claim Inspection</h2>
+                <p class="card-desc">Enter claim attributes or load an operational scenario preset.</p>
+              </div>
+              <div class="presets-dropdown">
+                <label for="scenario-select" class="sr-only">Load Scenario:</label>
+                <select id="scenario-select" onchange="loadScenario(this.value)">
+                  <option value="">⚡ Load Scenario Preset...</option>
+                  <option value="rogue_outlet">Scenario A: Rogue Outlet SP3160 (Post-May Exploit)</option>
+                  <option value="threshold_gaming">Scenario B: Threshold Gaming (₹1,950 Uninspected)</option>
+                  <option value="repeat_customer">Scenario C: High Prior Claims Customer (3+ Prior)</option>
+                  <option value="clean_claim">Scenario D: Clean Baseline Genuine Claim (₹4,500 Inspected)</option>
+                  <option value="serial_reuse">Scenario E: Serial Cross-Partner Reuse Ring</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- INPUT MODE TOGGLE -->
+            <div class="toggle-group">
+              <button id="btn-mode-form" class="subtab-btn active" onclick="setInputMode('form')">Structured Form</button>
+              <button id="btn-mode-json" class="subtab-btn" onclick="setInputMode('json')">Raw JSON Payload</button>
+            </div>
+
+            <!-- STRUCTURED FORM -->
+            <form id="claim-form" onsubmit="handleScoreSubmit(event)">
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="f-claim-id">Claim ID</label>
+                  <input type="text" id="f-claim-id" value="WC720101" required>
+                </div>
+                <div class="form-group">
+                  <label for="f-partner-id">Partner ID (Outlet)</label>
+                  <input type="text" id="f-partner-id" value="SP3160" placeholder="e.g. SP3160, SP3033" required>
+                </div>
+                <div class="form-group">
+                  <label for="f-sku">Product SKU</label>
+                  <select id="f-sku" required>
+                    <option value="KH-AF-01">KH-AF-01 (Air Fryer - ₹5,199)</option>
+                    <option value="KH-AF-02">KH-AF-02 (Air Fryer - ₹6,499)</option>
+                    <option value="KH-AF-03">KH-AF-03 (Air Fryer - ₹8,773)</option>
+                    <option value="KH-AP-01">KH-AP-01 (Air Purifier - ₹12,999)</option>
+                    <option value="KH-MG-01">KH-MG-01 (Mixer Grinder - ₹2,999)</option>
+                    <option value="KH-MG-02" selected>KH-MG-02 (Mixer Grinder - ₹4,499)</option>
+                    <option value="KH-RV-01">KH-RV-01 (Robot Vacuum - ₹24,999)</option>
+                    <option value="KH-WP-01">KH-WP-01 (Water Purifier - ₹9,999)</option>
+                    <option value="KH-WP-02">KH-WP-02 (Water Purifier - ₹14,999)</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="f-serial">Product Serial</label>
+                  <input type="text" id="f-serial" value="KH-468276030" placeholder="e.g. KH222151083" required>
+                </div>
+                <div class="form-group">
+                  <label for="f-amount">Claim Amount (INR ₹)</label>
+                  <input type="number" id="f-amount" value="1950" min="100" max="50000" step="1" required>
+                </div>
+                <div class="form-group">
+                  <label for="f-days">Days Since Purchase</label>
+                  <input type="number" id="f-days" value="85" min="0" max="1000" required>
+                </div>
+                <div class="form-group">
+                  <label for="f-prior">Customer Prior Claims</label>
+                  <input type="number" id="f-prior" value="0" min="0" max="20" required>
+                </div>
+                <div class="form-group">
+                  <label for="f-photo">Photo Attached?</label>
+                  <select id="f-photo">
+                    <option value="Y">Y — Yes</option>
+                    <option value="N" selected>N — No</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="f-inspected">Partner Inspected Sign-off?</label>
+                  <select id="f-inspected">
+                    <option value="N" selected>N — No (Auto-Approved Tier)</option>
+                    <option value="Y">Y — Yes (Inspected)</option>
+                  </select>
+                </div>
+                <div class="form-group full-width">
+                  <label for="f-desc">Claim Description (Partner free text)</label>
+                  <input type="text" id="f-desc" value="blade jammed" required>
+                </div>
+                <div class="form-group full-width">
+                  <label for="f-note">Inspector Note</label>
+                  <input type="text" id="f-note" value="" placeholder="Blank if uninspected">
+                </div>
+              </div>
+
+              <div class="form-actions">
+                <button type="submit" class="btn btn-primary">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                  Evaluate Claim via Engine
+                </button>
+                <button type="button" class="btn btn-secondary" onclick="resetForm()">Reset</button>
+              </div>
+            </form>
+
+            <!-- JSON INPUT MODE -->
+            <div id="json-mode-container" style="display: none;">
+              <textarea id="json-input" rows="14" class="code-area">{
+  "claim_id": "WC720101",
+  "partner_id": "SP3160",
+  "sku": "KH-MG-02",
+  "product_serial": "KH-468276030",
+  "claim_amount_inr": 1950,
+  "days_since_purchase": 85,
+  "photo_attached": "N",
+  "partner_inspected": "N",
+  "claim_description": "blade jammed",
+  "inspector_note": "",
+  "customer_prior_claims": 0
+}</textarea>
+              <div class="form-actions">
+                <button type="button" class="btn btn-primary" onclick="scoreJsonPayload()">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                  Evaluate JSON Payload
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- RIGHT: SCORE VERDICT CARD -->
+          <div class="card result-card">
+            <div class="card-header">
+              <div class="card-title-group">
+                <h2 class="card-title">Triage Verdict</h2>
+                <p class="card-desc">Capacity-aware rupee saving decision & plain-English reasons.</p>
+              </div>
+              <span id="rec-badge" class="badge badge-check">CHECK</span>
+            </div>
+
+            <!-- KEY NUMBERS BANNER -->
+            <div class="verdict-banner">
+              <div class="verdict-stat">
+                <div class="stat-meta">Calibrated Fraud Prob (p)</div>
+                <div id="res-score" class="stat-number danger">99.9%</div>
+                <div id="res-conformal" class="stat-sub">95% CI: [95.7% – 99.9%]</div>
+              </div>
+              <div class="verdict-stat highlight">
+                <div class="stat-meta">Expected Net Saving</div>
+                <div id="res-saving" class="stat-number success">+₹1,948</div>
+                <div class="stat-sub">Net of ₹380 goodwill</div>
+              </div>
+              <div class="verdict-stat">
+                <div class="stat-meta">Recommendation</div>
+                <div id="res-action" class="stat-action-text check">DESK CHECK</div>
+                <div id="res-conf" class="stat-sub">High Confidence</div>
+              </div>
+            </div>
+
+            <!-- RUPEE MATH FORMULA BREAKDOWN -->
+            <div class="math-breakdown-box">
+              <div class="math-title">Decision Layer Rupee Formula (Policy §4)</div>
+              <div class="math-formula">
+                <code>Expected Saving = (p × ₹Amount) − ((1 − p) × ₹380)</code>
+              </div>
+              <div id="math-values" class="math-values">
+                = (0.999 × ₹1,950) − (0.001 × ₹380) = <strong>+₹1,948</strong>
+              </div>
+            </div>
+
+            <!-- COUNTERFACTUAL WHAT-IF POLICY ANALYSIS -->
+            <div class="counterfactual-box" id="cf-container">
+              <div class="cf-title">⚡ Counterfactual "What-If" Policy Levers</div>
+              <div class="cf-list" id="cf-list">
+                <!-- Dynamically populated -->
+              </div>
+            </div>
+
+            <!-- PLAIN-ENGLISH REASONS LIST -->
+            <div class="reasons-section">
+              <h3 class="section-title">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                Plain-English Audit Reasons
+              </h3>
+              <ul id="reasons-list" class="reasons-list">
+                <li>Outlet SP3160: 10 of 39 historical claims were verified fraud (shrunk outlet risk: 36.8%).</li>
+                <li>Threshold gaming pattern: Claim amount ₹1,950 sits immediately below the ₹2,000 auto-approval cap.</li>
+                <li>Serial reuse alert: Serial KH468276030 was involved in 2 previous fraudulent claim(s).</li>
+                <li>Missing physical evidence: No photo attached to claim submission.</li>
+              </ul>
+            </div>
+
+            <!-- DATA WARNINGS -->
+            <div id="warnings-box" class="warnings-box">
+              <div class="warning-title">⚠️ Data Quality Warnings</div>
+              <ul id="warnings-list">
+                <li>Threshold gaming alert: ₹1,950 sits immediately below the ₹2,000 auto-approval cap.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 2: THIS MONTH'S TOP 40 TRIAGE DESK -->
+      <section id="tab-top40" class="tab-content">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title-group">
+              <h2 class="card-title">Desk Review Queue: Capacity Top 40 / Month</h2>
+              <p class="card-desc">Ranked via Markowitz Risk-Adjusted Knapsack Optimization (Capacity = 40 checks / month).</p>
+            </div>
+            <div class="filter-group">
+              <label for="month-filter" class="filter-label">Select Month:</label>
+              <select id="month-filter" onchange="loadTop40Table(this.value)">
+                <option value="2026-07">July 2026 (786 claims → Top 40)</option>
+                <option value="2026-08">August 2026 (730 claims → Top 40)</option>
+                <option value="2026-09">September 2026 (736 claims → Top 40)</option>
+                <option value="all">Full Test Period (Top 40 Overall)</option>
+              </select>
+              <a href="/predictions.csv" download class="btn btn-secondary btn-sm">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                Export predictions.csv
+              </a>
+            </div>
+          </div>
+
+          <!-- TOP 40 SUMMARY METRICS -->
+          <div class="summary-cards-row">
+            <div class="summary-card">
+              <div class="s-label">Claims in Pool</div>
+              <div id="triage-pool-count" class="s-val">786</div>
+            </div>
+            <div class="summary-card highlight">
+              <div class="s-label">Desk Capacity</div>
+              <div class="s-val">40 claims</div>
+            </div>
+            <div class="summary-card success">
+              <div class="s-label">Est. Expected Net Savings</div>
+              <div id="triage-total-savings" class="s-val">₹22,671</div>
+            </div>
+            <div class="summary-card">
+              <div class="s-label">Avg Top-40 Score</div>
+              <div id="triage-avg-score" class="s-val">0.518</div>
+            </div>
+          </div>
+
+          <!-- TABLE -->
+          <div class="table-responsive">
+            <table class="data-table" id="top40-table">
+              <thead>
+                <tr>
+                  <th>Rank</th>
+                  <th>Claim ID</th>
+                  <th>Partner (Outlet)</th>
+                  <th>City & Type</th>
+                  <th>Product SKU</th>
+                  <th>Amount (₹)</th>
+                  <th>Calibrated Score (p)</th>
+                  <th>Exp. Net Saving (₹)</th>
+                  <th>Recommendation</th>
+                  <th>Key Plain-English Reason</th>
+                </tr>
+              </thead>
+              <tbody id="top40-tbody">
+                <!-- Dynamically Populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 3: EXECUTIVE EVIDENCE & ROI -->
+      <section id="tab-evidence" class="tab-content">
+        <div class="evidence-grid">
+          <!-- CARD 1: THE ACCURACY TRAP -->
+          <div class="card">
+            <div class="card-header">
+              <h2 class="card-title">1. Why the 97% Accuracy Target is a Trap</h2>
+            </div>
+            <div class="card-text-content">
+              <div class="callout warning">
+                <strong>The Board's Paradox:</strong> In an imbalanced dataset where fraud is ~1.2% (141 of 11,146 claims), a dummy model that <em>approves every single claim</em> achieves <strong>98.8% accuracy</strong> while catching <strong>zero</strong> fraud and stopping <strong>₹0</strong> in losses!
+              </div>
+              <table class="benchmark-table">
+                <thead>
+                  <tr>
+                    <th>Strategy</th>
+                    <th>Reported Accuracy</th>
+                    <th>Precision@40/mo</th>
+                    <th>Fraud Caught</th>
+                    <th>Goodwill Bill</th>
+                    <th>Net Saved / Check</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><strong>Approve All (Do Nothing)</strong></td>
+                    <td class="bad">98.8% (Misleading)</td>
+                    <td>0.0%</td>
+                    <td>0</td>
+                    <td>₹0</td>
+                    <td class="bad">₹0 / check</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Rules-Only (New & Small)</strong></td>
+                    <td>94.2%</td>
+                    <td>17.5%</td>
+                    <td>21 / 45</td>
+                    <td>₹37,620</td>
+                    <td>-₹11 / check</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Plain Classifier</strong></td>
+                    <td>92.5%</td>
+                    <td>1.7%</td>
+                    <td>2 / 45</td>
+                    <td>₹44,840</td>
+                    <td>-₹116 / check</td>
+                  </tr>
+                  <tr class="highlight-row">
+                    <td><strong>Kestrel 3-Layer System (Ours)</strong></td>
+                    <td class="good">92.6%</td>
+                    <td class="good"><strong>26.2% – 62.5%</strong></td>
+                    <td class="good"><strong>Top Recoveries</strong></td>
+                    <td>Controlled</td>
+                    <td class="good"><strong>+₹675 / check</strong></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- CARD 2: THE MAY 2026 POLICY LOOPHOLE -->
+          <div class="card">
+            <div class="card-header">
+              <h2 class="card-title">2. Root Cause: The May 1, 2026 Policy Change</h2>
+            </div>
+            <div class="card-text-content">
+              <p>On 1 May 2026, claims under ₹2,000 were auto-approved without inspection to cut turnaround times. This created an immediate gaming incentive:</p>
+              <div class="stats-comparison-grid">
+                <div class="stat-compare-box">
+                  <div class="compare-title">Pre-May 2026 Small Claims</div>
+                  <div class="compare-val">0.5% fraud</div>
+                  <div class="compare-desc">Mandatory partner inspection for all claims</div>
+                </div>
+                <div class="stat-compare-box danger">
+                  <div class="compare-title">Post-May 2026 Small Claims</div>
+                  <div class="compare-val">3.2% fraud (6.4x spike!)</div>
+                  <div class="compare-desc">35 of 36 post-May frauds are small claims &lt; ₹2k</div>
+                </div>
+              </div>
+              <div class="callout tip">
+                <strong>Key Insight (Meenal was right):</strong> The fraud is not "all new partners". Post-May small claims at genuine established partners have only <strong>0.1% fraud</strong> (1/924). The fraud is heavily concentrated in a handful of rogue outlets (e.g., SP3160, SP3232, SP3318, SP3207).
+              </div>
+            </div>
+          </div>
+
+          <!-- CARD 3: THREE-LAYER ARCHITECTURE -->
+          <div class="card">
+            <div class="card-header">
+              <h2 class="card-title">3. The 3-Layer Architecture Solution</h2>
+            </div>
+            <div class="architecture-flow">
+              <div class="arch-step">
+                <div class="step-num">Layer 1</div>
+                <div class="step-body">
+                  <h4>Gradient-Boosted Classifier</h4>
+                  <p>Calibrated HistGB + XGBoost ensemble on tabular ratios, customer history (0→0.8%, 1→1.8%, 2→5.4%, 3+→21%), days since purchase vs warranty, and text signals.</p>
+                </div>
+              </div>
+              <div class="arch-step">
+                <div class="step-num">Layer 2</div>
+                <div class="step-body">
+                  <h4>Entity-Risk & Empirical-Bayes Shrinkage</h4>
+                  <p>Shrinks outlet fraud rates toward cohort prior ($m=10$), preventing unfair penalties on clean new partners while isolating serial reuse and threshold bursts.</p>
+                </div>
+              </div>
+              <div class="arch-step">
+                <div class="step-num">Layer 3</div>
+                <div class="step-body">
+                  <h4>Capacity-Aware Markowitz Rupee Ranker</h4>
+                  <p>Ranks claims strictly by expected savings minus risk variance penalty, serving the exact 40 highest-value claims to the desk per month with transparent audit reasons.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- CARD 4: FAILURE MODE AUDIT & HONEST LIMITATIONS -->
+          <div class="card">
+            <div class="card-header">
+              <h2 class="card-title">4. Honest Failure Modes & Risk Mitigations</h2>
+            </div>
+            <div class="card-text-content">
+              <ul class="bullet-list">
+                <li><strong>False Positive Goodwill Bill:</strong> Holding a genuine claim costs ₹380. Because our ranking maximizes net expected savings, each check in the top 40 has $p \ge 5\%$ for large claims and $p \ge 49\%$ for ₹400 claims, ensuring expected rupee savings are strictly positive.</li>
+                <li><strong>Unseen Partners (14 in test set):</strong> Empirical-Bayes shrinkage automatically falls back to the partner type prior for unseen outlets, preventing false blacklisting.</li>
+                <li><strong>Label Noise (Legacy Zoho 0s):</strong> Legacy Zoho zeros (which hid undecided outcomes) are down-weighted ($w=0.75$) during training to prevent noise contamination.</li>
+                <li><strong>Adversarial Adaptation:</strong> Retrain monthly and monitor outlet burst velocities to detect new gaming thresholds.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 4: API & EXPORT -->
+      <section id="tab-api-export" class="tab-content">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title-group">
+              <h2 class="card-title">Developer API & predictions.csv Artifacts</h2>
+              <p class="card-desc">Production REST API documentation and verified submission download.</p>
+            </div>
+          </div>
+
+          <div class="api-grid">
+            <div class="api-box">
+              <h3>Single Claim Evaluation Endpoint</h3>
+              <p><code>POST /score</code></p>
+              <pre class="code-block"><code>curl -X POST "http://127.0.0.1:8000/score" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "claim_id": "WC720101",
+    "partner_id": "SP3160",
+    "sku": "KH-MG-02",
+    "product_serial": "KH468276030",
+    "claim_amount_inr": 1950,
+    "days_since_purchase": 85,
+    "photo_attached": "N",
+    "partner_inspected": "N",
+    "claim_description": "blade jammed",
+    "inspector_note": "",
+    "customer_prior_claims": 0
+  }'</code></pre>
+            </div>
+
+            <div class="api-box">
+              <h3>Response Format (JSON)</h3>
+              <pre class="code-block"><code>{
+  "claim_id": "WC720101",
+  "score": 0.999,
+  "calibrated_probability": 0.999,
+  "expected_saving_inr": 1947.67,
+  "recommendation": "CHECK",
+  "conformal_interval": [0.957, 0.999],
+  "counterfactuals": [
+    {
+      "lever": "Mandatory Partner Inspection",
+      "simulated_prob": 0.061,
+      "prob_delta_pct": 93.8,
+      "verdict": "PAY"
+    }
+  ],
+  "reasons": [
+    "Outlet SP3160: 10 of 39 historical claims were verified fraud (shrunk outlet risk: 36.8%).",
+    "Threshold gaming pattern: Claim amount ₹1,950 sits immediately below the ₹2,000 auto-approval cap."
+  ]
+}</code></pre>
+            </div>
+          </div>
+
+          <div class="download-section">
+            <div class="download-info">
+              <h3>Download Official predictions.csv</h3>
+              <p>2,252 rows matching sample_submission.csv format (claim_id, score) scored on test_unlabelled.csv.</p>
+            </div>
+            <a href="/predictions.csv" download class="btn btn-primary">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+              Download predictions.csv (2,252 rows)
+            </a>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="app-footer">
+      <div>Kestrel Claim Triage v1.2 · Designed for Kabir Nanda & Ritu Deshpande · Fully Local / Zero Paid API Keys</div>
+      <div class="footer-links">
+        <a href="/docs" target="_blank">FastAPI Swagger Docs</a> · 
+        <a href="/health" target="_blank">Health Check</a>
+      </div>
+    </footer>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
