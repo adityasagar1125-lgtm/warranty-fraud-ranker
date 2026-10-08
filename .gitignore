@@ -37,3 +37,6 @@ Thumbs.db
 # System generated logs
 *.log
 .system_generated/
+
+video_script.md
+submission_answers.md

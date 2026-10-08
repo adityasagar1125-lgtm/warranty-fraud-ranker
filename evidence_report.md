@@ -23,32 +23,34 @@ To simulate real-world forward testing:
 
 ## 3. Benchmark Comparisons on Time-Split Validation
 
-Across the 3-month validation window (120 total desk reviews):
+Across the 3-month validation window (Apr–Jun 2026, 120 total desk reviews across 2,136 claims, 45 frauds):
 
-| Strategy / Model | Overall Accuracy | Precision@40/mo | Fraud Caught (TP) | Genuine Held (FP) | Goodwill Bill | Net Rupees Saved | Net Rs Saved / Check | PR-AUC |
-|---|---|---|---|---|---|---|---|---|
-| **1. Approve All (Do Nothing)** | **92.6%** | 2.5% | 3 / 45 | 117 | ₹44,460 | **-₹39,740** | **-₹331** | 0.021 |
-| **2. Rules-Only ("New & Small")** | **94.2%** | 17.5% | 21 / 45 | 99 | ₹37,620 | **-₹1,266** | **-₹11** | 0.125 |
-| **3. Plain HistGB Classifier** | **92.5%** | 1.7% | 2 / 45 | 118 | ₹44,840 | **-₹13,877** | **-₹116** | 0.038 |
-| **4. Kestrel 3-Layer System** | **92.6%** | **26.2% – 62.5%** | **Top Recoveries** | Controlled | Optimized | **+₹81,098 (Test)** | **+₹675 / check** | **0.320+** |
+| Strategy / Model | Overall Accuracy | Precision@40/mo | Fraud Caught (TP) | Genuine Held (FP) | Goodwill Bill | Net Rupees Saved | Net Rs Saved / Check | ROC-AUC | PR-AUC |
+|---|---|---|---|---|---|---|---|---|---|
+| **1. Approve All (Do Nothing)** | **92.6%** | 2.5% | 3 / 45 | 117 | ₹44,460 | **-₹39,740** | **-₹331** | 0.500 | 0.021 |
+| **2. Rules-Only ("New & Small")** | **94.2%** | 17.5% | 21 / 45 | 99 | ₹37,620 | **-₹1,266** | **-₹11** | 0.835 | 0.125 |
+| **3. Plain HistGB Classifier** | **92.5%** | 1.7% | 2 / 45 | 118 | ₹44,840 | **-₹13,877** | **-₹116** | 0.382 | 0.038 |
+| **4. ML-Alone (Pre-May Shift)** | **92.6%** | 3.3% | 4 / 45 | 116 | ₹44,080 | **-₹9,154** | **-₹76** | 0.515 | 0.039 |
+| **5. Kestrel v2.0 Hybrid 3-Layer (Apr–Jun)** | **94.5%** | **20.0%** | **24 / 45** | **96** | ₹36,480 | **+₹16,934** | **+₹141** | **0.857** | **0.230** |
+| **6. Kestrel v2.0 Post-May Sub-Slice (May–Jun)** | **94.8%** | **26.3%** | **21 / 36 (58.3%)** | **59** | ₹22,420 | **+₹13,934** | **+₹174** | **0.924** | **0.238** |
 
 ### Key Findings:
-1. **The Accuracy Trap Confirmed:** "Approve All" achieves 92.6%–98.8% accuracy simply because the vast majority of claims are genuine. However, it results in maximum fraud losses and **zero** fraud prevention.
+1. **The Accuracy Trap Confirmed:** "Approve All" achieves 92.6% accuracy simply because the vast majority of claims are genuine. However, it results in maximum fraud losses and **zero** fraud prevention.
 2. **Rules-Only Fails Genuine Partners:** Simple threshold rules flag every new partner submitting small claims, unnecessarily holding 99 genuine customer claims and racking up ₹37,620 in goodwill penalties.
-3. **The 3-Layer Advantage:** By blending calibrated probabilities with empirical-Bayes outlet risk and ranking by expected rupees saved ($p \cdot \text{Amount} - (1-p) \cdot 380$), our system achieves **+₹675 net saved per claim checked**.
+3. **The 3-Layer Advantage:** By blending calibrated probabilities with time-decayed empirical-Bayes outlet risk and ranking by expected rupees saved ($p \cdot \text{Amount} - (1-p) \cdot 380$), our system achieves **+₹141 net saved per claim checked** overall, rising to **+₹174 per check (ROC-AUC 0.924)** on the post-May regime.
 
 ---
 
 ## 4. Test Set Performance (July – September 2026)
 
-Applying the production model to `test_unlabelled.csv` (2,252 claims, 40 checks per month):
+Applying the production model to `test_unlabelled.csv` (2,252 claims, 40 desk reviews per month):
 
 | Test Month | Total Claim Volume | Top-40 Average Calibrated Score ($p$) | Top-40 Estimated Net Rupees Saved | Average Net Saving per Claim Checked |
 |---|---|---|---|---|
-| **July 2026** | 786 | 51.8% | ₹22,671 | +₹567 / check |
-| **August 2026** | 730 | 58.9% | ₹30,688 | +₹767 / check |
-| **September 2026** | 736 | 62.5% | ₹27,739 | +₹693 / check |
-| **Total Test Quarter** | **2,252** | **57.7%** | **₹81,098** | **+₹675 / check** |
+| **July 2026** | 786 | 79.2% | ₹50,910 | +₹1,273 / check |
+| **August 2026** | 730 | 77.0% | ₹58,735 | +₹1,468 / check |
+| **September 2026** | 736 | 82.2% | ₹52,415 | +₹1,310 / check |
+| **Total Test Quarter** | **2,252** | **79.5%** | **₹162,060** | **+₹1,351 / check** |
 
 ---
 

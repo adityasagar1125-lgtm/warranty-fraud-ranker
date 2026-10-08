@@ -1,23 +1,35 @@
 {
+  "version": "v2.0",
+  "enhancements": [
+    "serial_fraud_hist leakage FIXED",
+    "EWMA temporal-decay partner risk",
+    "Simpson SKU concentration per outlet",
+    "Inter-arrival burstiness per outlet",
+    "Weekend/off-hours ratio per outlet",
+    "Family-relative amount z-score",
+    "Temporal features (day_of_week, hour, month_end)",
+    "Hybrid rules baseline signal as feature",
+    "Monotonic constraints on directional features"
+  ],
   "time_split_validation": {
     "total_claims_in_slice": 2136,
     "total_fraud_in_slice": 45,
     "total_fraud_rupees": 104109.0,
     "months_evaluated": 3,
     "total_claims_checked": 120,
-    "fraud_caught_tp": 3,
-    "genuine_held_fp": 117,
-    "fraud_missed_fn": 42,
-    "precision_at_40_month": 0.025,
-    "recall_at_40_month": 0.06666666666666667,
-    "fraud_amount_prevented_inr": 40286.0,
-    "goodwill_paid_inr": 44460.0,
-    "net_rupees_saved_inr": -4174.0,
-    "rupees_saved_per_claim_checked": -34.78333333333333,
-    "roc_auc": 0.4997608799617408,
-    "pr_auc": 0.021067415730337078,
-    "brier_score": 0.021334215752110988,
-    "overall_accuracy": 0.925561797752809
+    "fraud_caught_tp": 24,
+    "genuine_held_fp": 96,
+    "fraud_missed_fn": 21,
+    "precision_at_40_month": 0.2,
+    "recall_at_40_month": 0.5333333333333333,
+    "fraud_amount_prevented_inr": 53414.0,
+    "goodwill_paid_inr": 36480.0,
+    "net_rupees_saved_inr": 16934.0,
+    "rupees_saved_per_claim_checked": 141.11666666666667,
+    "roc_auc": 0.8570487273500186,
+    "pr_auc": 0.22967527976756694,
+    "brier_score": 0.04258227500114466,
+    "overall_accuracy": 0.9452247191011236
   },
   "post_may_validation": {
     "total_claims_in_slice": 1431,
@@ -25,19 +37,19 @@
     "total_fraud_rupees": 67123.0,
     "months_evaluated": 2,
     "total_claims_checked": 80,
-    "fraud_caught_tp": 1,
-    "genuine_held_fp": 79,
-    "fraud_missed_fn": 35,
-    "precision_at_40_month": 0.0125,
-    "recall_at_40_month": 0.027777777777777776,
-    "fraud_amount_prevented_inr": 17866.0,
-    "goodwill_paid_inr": 30020.0,
-    "net_rupees_saved_inr": -12154.0,
-    "rupees_saved_per_claim_checked": -151.925,
-    "roc_auc": 0.4996415770609319,
-    "pr_auc": 0.025157232704402517,
-    "brier_score": 0.025567561038790407,
-    "overall_accuracy": 0.9203354297693921
+    "fraud_caught_tp": 21,
+    "genuine_held_fp": 59,
+    "fraud_missed_fn": 15,
+    "precision_at_40_month": 0.2625,
+    "recall_at_40_month": 0.5833333333333334,
+    "fraud_amount_prevented_inr": 36354.0,
+    "goodwill_paid_inr": 22420.0,
+    "net_rupees_saved_inr": 13934.0,
+    "rupees_saved_per_claim_checked": 174.175,
+    "roc_auc": 0.9236360015929909,
+    "pr_auc": 0.23779148732761085,
+    "brier_score": 0.056935980244106836,
+    "overall_accuracy": 0.9482879105520615
   },
   "approve_all_baseline": {
     "total_claims_in_slice": 2136,
@@ -99,66 +111,106 @@
     "brier_score": 0.021548300036009053,
     "overall_accuracy": 0.924625468164794
   },
+  "ml_alone_baseline": {
+    "total_claims_in_slice": 2136,
+    "total_fraud_in_slice": 45,
+    "total_fraud_rupees": 104109.0,
+    "months_evaluated": 3,
+    "total_claims_checked": 120,
+    "fraud_caught_tp": 4,
+    "genuine_held_fp": 116,
+    "fraud_missed_fn": 41,
+    "precision_at_40_month": 0.03333333333333333,
+    "recall_at_40_month": 0.08888888888888889,
+    "fraud_amount_prevented_inr": 34926.0,
+    "goodwill_paid_inr": 44080.0,
+    "net_rupees_saved_inr": -9154.0,
+    "rupees_saved_per_claim_checked": -76.28333333333333,
+    "roc_auc": 0.5146500876773473,
+    "pr_auc": 0.038675267027326946,
+    "brier_score": 0.022941979064486147,
+    "overall_accuracy": 0.9264981273408239
+  },
   "top_features": [
     [
-      "serial_fraud_hist",
-      0.7804045677185059
+      "partner_shrunk_risk",
+      0.19906865060329437
     ],
     [
-      "partner_shrunk_risk",
-      0.07242224365472794
+      "partner_ewma_fraud_rate",
+      0.1829519122838974
     ],
     [
       "partner_raw_fraud_rate",
-      0.0534859262406826
+      0.08137910813093185
     ],
     [
-      "family_air_fryer",
-      0.03340277820825577
+      "amount_to_list_ratio",
+      0.023456428200006485
     ],
     [
-      "uninspected_new_partner",
-      0.0077283610589802265
-    ],
-    [
-      "log_claim_amount",
-      0.006430713459849358
-    ],
-    [
-      "uninspected_small_claim",
-      0.005391365848481655
-    ],
-    [
-      "claim_amount_inr",
-      0.004592858720570803
-    ],
-    [
-      "kw_desc_not_charging",
-      0.004354801028966904
+      "family_robot_vacuum",
+      0.019045647233724594
     ],
     [
       "partner_risk_x_small_claim",
-      0.0025374654214829206
+      0.01591189019382
     ],
     [
-      "post_may",
-      0.002439772477373481
+      "partner_type_asc",
+      0.01578269898891449
     ],
     [
-      "new_partner_small_post_may",
-      0.0020168458577245474
+      "claim_amount_inr",
+      0.013615270145237446
     ],
     [
-      "purchase_to_warranty_ratio",
-      0.001800739555619657
+      "serial_cross_partner_count",
+      0.013458714820444584
     ],
     [
-      "desc_svd_2",
-      0.0017701536417007446
+      "is_weekend",
+      0.013354659080505371
     ],
     [
-      "outlet_benford_divergence",
-      0.0016751914517953992
+      "days_to_month_end",
+      0.012877659872174263
+    ],
+    [
+      "desc_char_length",
+      0.012642381712794304
+    ],
+    [
+      "desc_svd_3",
+      0.012251036241650581
+    ],
+    [
+      "kw_desc_filter_indicator_stuck",
+      0.011917552910745144
+    ],
+    [
+      "partner_thresh_gaming_share",
+      0.011617149226367474
+    ],
+    [
+      "photo_attached",
+      0.011506604962050915
+    ],
+    [
+      "hour_of_day",
+      0.01146441139280796
+    ],
+    [
+      "kw_note_motor_winding",
+      0.01144426316022873
+    ],
+    [
+      "serial_cross_sku_count",
+      0.011383121833205223
+    ],
+    [
+      "desc_svd_4",
+      0.01129023265093565
     ]
   ]
 }

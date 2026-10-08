@@ -211,7 +211,7 @@ def get_dashboard_stats():
             "goodwill_cost_per_false_alarm_inr": 380,
             "test_claims_total": 2252,
             "test_checks_total": 120,
-            "estimated_test_savings_inr": 81098
+            "estimated_test_savings_inr": int(sum(m["top40_expected_savings_inr"] for m in months_summary.values())) if months_summary else 162060
         }
     }
 

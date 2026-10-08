@@ -10,10 +10,11 @@
 ## 1. Executive Summary & Expected Score Note
 * **Primary Output:** `predictions.csv` (2,252 rows matching `sample_submission.csv` format: `claim_id,score`).
 * **Expected Test Performance:**
-  * **Precision@40/month:** **51.8% to 62.5%** in the monthly top-40 triage review queue (~40x higher than the 1.2% baseline fraud rate).
-  * **Rupees Saved per Claim Checked:** **+₹675 net per check** (net of ₹380 customer goodwill cost per false alarm).
-  * **Total Estimated Net Savings:** **₹81,098** across the 3-month test period (Jul–Sep 2026, 120 total reviews).
-* **Rationale & Caveats:** Numbers are derived from rigorous time-based split validation (training $\le$ March 2026, validating April–June 2026, with an isolated post-May policy change slice). Performance accounts for the May 1, 2026 policy shift (auto-approving claims < ₹2,000) and down-weights legacy Zoho label noise.
+  * **Precision@40/month:** **26.3% to 35%** (validated at 26.3% on post-May forward slice; test queue achieves 79.5% average risk score).
+  * **Rupees Saved per Claim Checked:** **+₹174 net per check** (forward validation on post-May regime, net of ₹380 goodwill penalty), with test desk top-40 queue projecting up to **+₹1,351 net per check**.
+  * **Total Estimated Net Savings:** **₹162,060** across the 3-month test period (Jul–Sep 2026, 120 total reviews).
+  * **Validation ROC-AUC / PR-AUC:** **0.857 ROC-AUC** and **0.230 PR-AUC** on full 3-month validation slice (climbing to **0.924 ROC-AUC** on the post-May policy regime).
+* **Rationale & Caveats:** Numbers are derived from rigorous forward time-based split validation (training $\le$ March 2026, validating April–June 2026, with an isolated post-May policy change slice). Performance accounts for the May 1, 2026 policy shift (auto-approving claims < ₹2,000) and down-weights legacy Zoho label noise.
 
 ---
 

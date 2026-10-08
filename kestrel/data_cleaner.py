@@ -95,21 +95,42 @@ def clean_and_prepare_dataset(
         data = data.sort_values('orig_order')
         
     # 3. Normalise serial numbers
+    if 'product_serial' not in data.columns:
+        data['product_serial'] = ''
     data['norm_serial'] = data['product_serial'].apply(clean_serial)
     
-    # 4. Binary conversions
+    # 4. Binary conversions and safe defaults
+    if 'photo_attached' not in data.columns:
+        data['photo_attached'] = 'Y'
+    if 'partner_inspected' not in data.columns:
+        data['partner_inspected'] = 'Y'
+    if 'days_since_purchase' not in data.columns:
+        data['days_since_purchase'] = 90
+    if 'claim_amount_inr' not in data.columns:
+        data['claim_amount_inr'] = 0.0
+    if 'customer_prior_claims' not in data.columns:
+        data['customer_prior_claims'] = 0
+    if 'claim_description' not in data.columns:
+        data['claim_description'] = ''
+    if 'inspector_note' not in data.columns:
+        data['inspector_note'] = ''
+
     data['photo_attached_bin'] = data['photo_attached'].apply(lambda x: 1 if str(x).upper() == 'Y' else 0)
     data['partner_inspected_bin'] = data['partner_inspected'].apply(lambda x: 1 if str(x).upper() == 'Y' else 0)
     data['days_since_purchase'] = pd.to_numeric(data['days_since_purchase'], errors='coerce').fillna(0)
     data['claim_amount_inr'] = pd.to_numeric(data['claim_amount_inr'], errors='coerce').fillna(0)
     data['customer_prior_claims'] = pd.to_numeric(data['customer_prior_claims'], errors='coerce').fillna(0)
     
-    # 5. Merge partner metadata
+    # 5. Merge partner metadata (avoid duplicate columns if already merged)
+    partner_cols = ['city', 'onboarded_dt', 'partner_type']
+    data = data.drop(columns=[c for c in partner_cols if c in data.columns], errors='ignore')
     p_meta = partners_df.copy()
     p_meta['onboarded_dt'] = pd.to_datetime(p_meta['onboarded_date'])
     data = data.merge(p_meta[['partner_id', 'city', 'onboarded_dt', 'partner_type']], on='partner_id', how='left')
     
-    # 6. Merge product metadata
+    # 6. Merge product metadata (avoid duplicate columns if already merged)
+    product_cols = ['family', 'list_price_inr', 'warranty_months']
+    data = data.drop(columns=[c for c in product_cols if c in data.columns], errors='ignore')
     data = data.merge(products_df[['sku', 'family', 'list_price_inr', 'warranty_months']], on='sku', how='left')
     
     # 7. Derived domain features
