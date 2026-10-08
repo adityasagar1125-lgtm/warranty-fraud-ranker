@@ -967,3 +967,52 @@ input:focus, select:focus, textarea:focus {
 .footer-links a:hover {
   text-decoration: underline;
 }
+
+/* BUTTON LOADING SPINNER & FEEDBACK */
+.btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin 0.6s linear infinite;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* VERDICT CARD FLASH EFFECT */
+.card-updated-flash {
+  animation: cardPulse 0.5s ease-out;
+}
+
+@keyframes cardPulse {
+  0% {
+    box-shadow: 0 0 0 2px var(--accent-blue), 0 0 30px rgba(59, 130, 246, 0.4);
+    transform: scale(1.005);
+  }
+  100% {
+    box-shadow: var(--shadow-card);
+    transform: scale(1);
+  }
+}
+
+.eval-timestamp {
+  font-size: 11px;
+  color: var(--accent-cyan);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--border-color);
+}

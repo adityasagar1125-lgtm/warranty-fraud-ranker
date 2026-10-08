@@ -155,34 +155,62 @@ function resetForm() {
   loadScenario('rogue_outlet');
 }
 
+const API_BASE = (window.location.protocol === 'file:' || !window.location.host) ? 'http://127.0.0.1:8000' : '';
+
 // SCORE SUBMISSIONS
 async function handleScoreSubmit(e) {
   e.preventDefault();
+  const formBtn = document.querySelector('#claim-form button[type="submit"]');
+  const originalHtml = formBtn ? formBtn.innerHTML : '';
+  if (formBtn) {
+    formBtn.disabled = true;
+    formBtn.innerHTML = `<span class="spinner"></span> Evaluating Claim...`;
+  }
+
   const payload = getFormPayload();
-  await submitScoreRequest(payload);
+  try {
+    await submitScoreRequest(payload);
+  } finally {
+    if (formBtn) {
+      formBtn.disabled = false;
+      formBtn.innerHTML = originalHtml;
+    }
+  }
 }
 
 async function scoreJsonPayload() {
+  const jsonBtn = document.querySelector('#json-mode-container button');
+  const originalHtml = jsonBtn ? jsonBtn.innerHTML : '';
+  if (jsonBtn) {
+    jsonBtn.disabled = true;
+    jsonBtn.innerHTML = `<span class="spinner"></span> Evaluating JSON...`;
+  }
+
   try {
     const raw = document.getElementById('json-input').value;
     const payload = JSON.parse(raw);
     await submitScoreRequest(payload);
   } catch (err) {
     alert("Invalid JSON format: " + err.message);
+  } finally {
+    if (jsonBtn) {
+      jsonBtn.disabled = false;
+      jsonBtn.innerHTML = originalHtml;
+    }
   }
 }
 
 async function submitScoreRequest(payload) {
   try {
-    const resp = await fetch('/score', {
+    const resp = await fetch(API_BASE + '/score', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
     
     if (!resp.ok) {
-      const err = await resp.json();
-      alert("Error scoring claim: " + (err.detail || resp.statusText));
+      const err = await resp.json().catch(() => ({}));
+      alert("Error scoring claim: " + (err.detail || resp.statusText || 'Server Error'));
       return;
     }
     
@@ -190,7 +218,7 @@ async function submitScoreRequest(payload) {
     renderScoreVerdict(result, payload);
   } catch (err) {
     console.error("Scoring error:", err);
-    alert("Network error contacting scoring engine.");
+    alert("Network error contacting scoring engine. Please ensure 'python app.py' is running on port 8000 (http://127.0.0.1:8000).");
   }
 }
 
@@ -198,6 +226,14 @@ async function submitScoreRequest(payload) {
 function renderScoreVerdict(res, payload) {
   const isCheck = res.recommendation === 'CHECK';
   
+  // Visual pulse on result card so user instantly sees fresh result
+  const resultCard = document.querySelector('.result-card');
+  if (resultCard) {
+    resultCard.classList.remove('card-updated-flash');
+    void resultCard.offsetWidth; // trigger reflow
+    resultCard.classList.add('card-updated-flash');
+  }
+
   // Badge & Action
   const badge = document.getElementById('rec-badge');
   const actionText = document.getElementById('res-action');
@@ -297,12 +333,24 @@ function renderScoreVerdict(res, payload) {
   } else {
     warnBox.style.display = 'none';
   }
+
+  // Live Evaluation Timestamp
+  let timeEl = document.getElementById('res-eval-time');
+  if (!timeEl) {
+    timeEl = document.createElement('div');
+    timeEl.id = 'res-eval-time';
+    timeEl.className = 'eval-timestamp';
+    const resultCardEl = document.querySelector('.result-card');
+    if (resultCardEl) resultCardEl.appendChild(timeEl);
+  }
+  const now = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  timeEl.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg> Live Evaluated at ${now} by Kestrel v2.0 Engine`;
 }
 
 // LOAD TOP 40 TABLE
 async function loadTop40Table(month) {
   try {
-    const url = `/api/top40?month=${encodeURIComponent(month)}`;
+    const url = `${API_BASE}/api/top40?month=${encodeURIComponent(month)}`;
     const resp = await fetch(url);
     if (!resp.ok) return;
     
